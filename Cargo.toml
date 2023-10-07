@@ -1,0 +1,19 @@
+[package]
+name = "poe-api-rs"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[workspace]
+members = ["poe-api-derive", "poe-api-core"]
+
+[dependencies]
+tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread"] }
+async-graphql = "6.0.7"
+async-graphql-axum = "6.0.7"
+axum = { version = "0.6.20", features = ["headers"] }
+poe-api-derive = { path = "poe-api-derive" }
+regex = "1.9.5"
+serde = "1.0.188"
+serde_json = "1.0.107"
