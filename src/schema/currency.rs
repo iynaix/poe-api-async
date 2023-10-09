@@ -4,12 +4,25 @@ use super::filters::WhereInput;
 use super::ninja_currency::{Currency, CurrencyOrderby, CurrencyRaw, CurrencyWhere};
 use super::orderby::OrderbyInput;
 
-pub fn fetch_currencies(
+pub async fn fetch_currencies(
     _where: Option<CurrencyWhere>,
     _orderby: Vec<CurrencyOrderby>,
 ) -> Vec<Currency> {
-    let currencies: CurrencyRaw = serde_json::from_str(include_str!("currencies.json"))
-        .expect("failed to parse currencies.json");
+    let league = "Ancestor";
+    let endpoint = "Currency";
+    let url = format!(
+        "https://poe.ninja/api/data/currencyoverview?league={}&type={}",
+        league, endpoint
+    );
+    let currencies = reqwest::get(url)
+        .await
+        .expect("could not fetch currency data")
+        .json::<CurrencyRaw>()
+        .await
+        .expect("could not parse currency data");
+
+    // let currencies: CurrencyRaw = serde_json::from_str(include_str!("currencies.json"))
+    //     .expect("failed to parse currencies.json");
 
     let mut divine_price = 0.0;
 

@@ -2,9 +2,22 @@ use super::filters::WhereInput;
 use super::ninja_item::{Item, ItemOrderby, ItemRaw, ItemWhere};
 use super::orderby::OrderbyInput;
 
-pub fn fetch_items(_where: Option<ItemWhere>, _orderby: Vec<ItemOrderby>) -> Vec<Item> {
-    let items: ItemRaw =
-        serde_json::from_str(include_str!("jewelry.json")).expect("failed to parse jewelry.json");
+pub async fn fetch_items(_where: Option<ItemWhere>, _orderby: Vec<ItemOrderby>) -> Vec<Item> {
+    let league = "Ancestor";
+    let endpoint = "UniqueAccessory";
+    let url = format!(
+        "https://poe.ninja/api/data/itemoverview?league={}&type={}",
+        league, endpoint
+    );
+    let items = reqwest::get(url)
+        .await
+        .expect("could not fetch item data")
+        .json::<ItemRaw>()
+        .await
+        .expect("could not parse item data");
+
+    // let items: ItemRaw =
+    //     serde_json::from_str(include_str!("jewelry.json")).expect("failed to parse jewelry.json");
 
     let items: Vec<_> = items
         .lines

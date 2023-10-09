@@ -190,7 +190,7 @@ impl FieldInfo {
     }
 }
 
-fn where_struct(fields: &Vec<FieldInfo>, model_ident: &Ident) -> TokenStream {
+fn where_struct(fields: &[FieldInfo], model_ident: &Ident) -> TokenStream {
     if fields.is_empty() {
         return quote! {};
     }
@@ -214,7 +214,7 @@ fn where_struct(fields: &Vec<FieldInfo>, model_ident: &Ident) -> TokenStream {
     }
 }
 
-fn impl_whereinput(fields: &Vec<FieldInfo>, model_ident: &Ident) -> TokenStream {
+fn impl_whereinput(fields: &[FieldInfo], model_ident: &Ident) -> TokenStream {
     if fields.is_empty() {
         return quote! {};
     }
@@ -251,7 +251,7 @@ fn impl_whereinput(fields: &Vec<FieldInfo>, model_ident: &Ident) -> TokenStream 
     }
 }
 
-fn orderby_struct(fields: &Vec<FieldInfo>, model_ident: &Ident) -> TokenStream {
+fn orderby_struct(fields: &[FieldInfo], model_ident: &Ident) -> TokenStream {
     if fields.is_empty() {
         return quote! {};
     }
@@ -270,7 +270,7 @@ fn orderby_struct(fields: &Vec<FieldInfo>, model_ident: &Ident) -> TokenStream {
     }
 }
 
-fn impl_orderbyinput(fields: &Vec<FieldInfo>, model_ident: &Ident) -> TokenStream {
+fn impl_orderbyinput(fields: &[FieldInfo], model_ident: &Ident) -> TokenStream {
     if fields.is_empty() {
         return quote! {};
     }

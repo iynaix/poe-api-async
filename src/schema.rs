@@ -33,7 +33,7 @@ impl QueryRoot {
             Some(_orderby) => OrderbyInput::to_orderby_vec(&_orderby),
         };
 
-        fetch_currencies(_where, orderby_arr)
+        fetch_currencies(_where, orderby_arr).await
     }
 
     async fn item<'a>(
@@ -51,6 +51,6 @@ impl QueryRoot {
             Some(_orderby) => OrderbyInput::to_orderby_vec(&_orderby),
         };
 
-        fetch_items(_where, orderby_arr)
+        fetch_items(_where, orderby_arr).await
     }
 }
