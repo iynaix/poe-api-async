@@ -2,28 +2,77 @@ use super::cache::fetch_with_cache;
 use super::filters::WhereInput;
 use super::ninja_item::{Item, ItemOrderby, ItemRaw, ItemWhere};
 use super::orderby::OrderbyInput;
+use futures::future;
 
-async fn fetch_items(
-    _where: Option<ItemWhere>,
-    _orderby: Vec<ItemOrderby>,
-    league: &str,
-) -> Vec<Item> {
-    let endpoint = "UniqueAccessory";
+async fn fetch_item_endpoint(league: &str, endpoint: &str) -> ItemRaw {
     let url = format!(
         "https://poe.ninja/api/data/itemoverview?league={}&type={}",
         league, endpoint
     );
-    let items = reqwest::get(url)
+    reqwest::get(url)
         .await
-        .expect("could not fetch item data")
+        .unwrap_or_else(|_| panic!("could not fetch item data from endpoint: {}", endpoint))
         .json::<ItemRaw>()
         .await
-        .expect("could not parse item data");
+        .unwrap_or_else(|_| panic!("could not parse item data from endpoint: {}", endpoint))
+}
 
+async fn fetch_items(league: &str) -> Vec<Item> {
     // let items: ItemRaw =
     //     serde_json::from_str(include_str!("jewelry.json")).expect("failed to parse jewelry.json");
 
-    let items: Vec<_> = items
+    let endpoints = [
+        // General
+        "Tattoo",
+        "Omen",
+        "DivinationCard",
+        "Artifact",
+        "Oil",
+        "Incubator",
+        // Equipment & Gems
+        "UniqueWeapon",
+        "UniqueArmour",
+        "UniqueAccessory",
+        "UniqueFlask",
+        "UniqueJewel",
+        "UniqueRelic",
+        "SkillGem",
+        "ClusterJewel",
+        // Atlas
+        "Map",
+        "BlightedMap",
+        "BlightRavagedMap",
+        "ScourgedMap",
+        "UniqueMap",
+        "DeliriumOrb",
+        "Invitation",
+        "Scarab",
+        "Memory",
+        // Crafting
+        "BaseType",
+        "Fossil",
+        "Resonator",
+        "HelmetEnchant",
+        "Beast",
+        "Essence",
+        "Vial",
+    ];
+
+    let responses = future::join_all(
+        endpoints
+            .iter()
+            .map(|&endpoint| async move { fetch_item_endpoint(league, endpoint).await }),
+    )
+    .await;
+
+    let items = responses
+        .into_iter()
+        .fold(ItemRaw::default(), |mut acc, curr| {
+            acc.lines.extend(curr.lines);
+            acc
+        });
+
+    items
         .lines
         .iter()
         .map(|item| {
@@ -44,7 +93,16 @@ async fn fetch_items(
                 ..item.clone()
             }
         })
-        .collect();
+        .collect()
+}
+
+pub async fn get_items(_where: Option<ItemWhere>, _orderby: Vec<ItemOrderby>) -> Vec<Item> {
+    let league = "Ancestor";
+
+    let items = fetch_with_cache("item", league, || async { fetch_items(league).await })
+        .await
+        // error will be bubbled up from
+        .unwrap();
 
     let mut items = if let Some(_where) = _where {
         _where.filter_recursive(&items)
@@ -55,14 +113,4 @@ async fn fetch_items(
     ItemOrderby::orderby(&mut items, _orderby);
 
     items
-}
-
-pub async fn get_items(_where: Option<ItemWhere>, _orderby: Vec<ItemOrderby>) -> Vec<Item> {
-    let league = "Ancestor";
-
-    fetch_with_cache("item", league, || async {
-        fetch_items(_where, _orderby, league).await
-    })
-    .await
-    .expect("failed to fetch item data")
 }

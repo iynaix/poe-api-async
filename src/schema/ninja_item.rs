@@ -18,11 +18,11 @@ pub struct Item {
     pub id: i32,
     #[gql(where, orderby)]
     pub name: String,
-    pub icon: String,
+    pub icon: Option<String>,
     #[gql(where, orderby)]
     pub level_required: Option<i32>,
     #[gql(where, orderby)]
-    pub base_type: String,
+    pub base_type: Option<String>,
     #[gql(where, orderby)]
     pub links: Option<i32>,
     pub item_class: i32,
@@ -36,9 +36,9 @@ pub struct Item {
     pub implicit_modifiers: Vec<Modifier>,
     #[gql(where)]
     pub explicit_modifiers: Vec<Modifier>,
-    pub flavour_text: String,
+    pub flavour_text: Option<String>,
     #[gql(where, orderby)]
-    pub item_type: String,
+    pub item_type: Option<String>,
     #[gql(where, orderby)]
     pub chaos_value: f64,
     pub exalted_value: f64,
