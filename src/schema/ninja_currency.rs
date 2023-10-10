@@ -44,7 +44,7 @@ pub struct Currency {
     #[gql(where, orderby)]
     pub divine_value: f64,
     #[serde(default)]
-    // TODO: #[gql(where)]
+    #[gql(where)]
     pub endpoint: CurrencyEndpoint,
 }
 

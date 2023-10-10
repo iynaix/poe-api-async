@@ -4,7 +4,10 @@ use std::collections::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use super::ninja_item::Modifier;
+use super::{
+    ninja_currency::CurrencyEndpoint,
+    ninja_item::{ItemEndpoint, Modifier},
+};
 
 #[derive(Debug, InputObject)]
 pub struct StringFilter {
@@ -243,5 +246,49 @@ where
         }
 
         filtered
+    }
+}
+
+#[derive(Debug, InputObject)]
+pub struct ItemEndpointFilter {
+    _eq: Option<ItemEndpoint>,
+    _ne: Option<ItemEndpoint>,
+    _in: Option<Vec<ItemEndpoint>>,
+    _nin: Option<Vec<ItemEndpoint>>,
+}
+
+impl FilterInput for ItemEndpointFilter {
+    type Item = ItemEndpoint;
+
+    fn filter_fn(&self, s: Self::Item) -> bool {
+        match &self {
+            Self { _eq: Some(v), .. } if &s != v => false,
+            Self { _ne: Some(v), .. } if &s == v => false,
+            Self { _in: Some(v), .. } if !v.contains(&s) => false,
+            Self { _nin: Some(v), .. } if v.contains(&s) => false,
+            _ => true,
+        }
+    }
+}
+
+#[derive(Debug, InputObject)]
+pub struct CurrencyEndpointFilter {
+    _eq: Option<CurrencyEndpoint>,
+    _ne: Option<CurrencyEndpoint>,
+    _in: Option<Vec<CurrencyEndpoint>>,
+    _nin: Option<Vec<CurrencyEndpoint>>,
+}
+
+impl FilterInput for CurrencyEndpointFilter {
+    type Item = CurrencyEndpoint;
+
+    fn filter_fn(&self, s: Self::Item) -> bool {
+        match &self {
+            Self { _eq: Some(v), .. } if &s != v => false,
+            Self { _ne: Some(v), .. } if &s == v => false,
+            Self { _in: Some(v), .. } if !v.contains(&s) => false,
+            Self { _nin: Some(v), .. } if v.contains(&s) => false,
+            _ => true,
+        }
     }
 }

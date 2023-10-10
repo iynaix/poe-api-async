@@ -54,7 +54,7 @@ pub struct Item {
     #[gql(where)]
     pub corrupted: bool,
     #[serde(default)]
-    // TODO: #[gql(where)]
+    #[gql(where)]
     pub endpoint: ItemEndpoint,
 }
 
