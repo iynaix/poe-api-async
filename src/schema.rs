@@ -1,5 +1,6 @@
 use async_graphql::{Context, Object};
 
+mod cache;
 mod currency;
 mod filters;
 mod item;
@@ -8,8 +9,8 @@ mod ninja_currency;
 mod ninja_item;
 mod orderby;
 
-use currency::fetch_currencies;
-use item::fetch_items;
+use currency::get_currencies;
+use item::get_items;
 use ninja_currency::{Currency, CurrencyOrderby, CurrencyWhere};
 use ninja_item::{Item, ItemOrderby, ItemWhere};
 use orderby::{Orderby, OrderbyInput};
@@ -33,7 +34,7 @@ impl QueryRoot {
             Some(_orderby) => OrderbyInput::to_orderby_vec(&_orderby),
         };
 
-        fetch_currencies(_where, orderby_arr).await
+        get_currencies(_where, orderby_arr).await
     }
 
     async fn item<'a>(
@@ -51,6 +52,6 @@ impl QueryRoot {
             Some(_orderby) => OrderbyInput::to_orderby_vec(&_orderby),
         };
 
-        fetch_items(_where, orderby_arr).await
+        get_items(_where, orderby_arr).await
     }
 }

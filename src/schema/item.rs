@@ -1,9 +1,13 @@
+use super::cache::fetch_with_cache;
 use super::filters::WhereInput;
 use super::ninja_item::{Item, ItemOrderby, ItemRaw, ItemWhere};
 use super::orderby::OrderbyInput;
 
-pub async fn fetch_items(_where: Option<ItemWhere>, _orderby: Vec<ItemOrderby>) -> Vec<Item> {
-    let league = "Ancestor";
+async fn fetch_items(
+    _where: Option<ItemWhere>,
+    _orderby: Vec<ItemOrderby>,
+    league: &str,
+) -> Vec<Item> {
     let endpoint = "UniqueAccessory";
     let url = format!(
         "https://poe.ninja/api/data/itemoverview?league={}&type={}",
@@ -51,4 +55,14 @@ pub async fn fetch_items(_where: Option<ItemWhere>, _orderby: Vec<ItemOrderby>) 
     ItemOrderby::orderby(&mut items, _orderby);
 
     items
+}
+
+pub async fn get_items(_where: Option<ItemWhere>, _orderby: Vec<ItemOrderby>) -> Vec<Item> {
+    let league = "Ancestor";
+
+    fetch_with_cache("item", league, || async {
+        fetch_items(_where, _orderby, league).await
+    })
+    .await
+    .expect("failed to fetch item data")
 }

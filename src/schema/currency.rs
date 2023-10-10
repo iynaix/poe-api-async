@@ -1,14 +1,15 @@
 use std::collections::HashMap;
 
+use super::cache::fetch_with_cache;
 use super::filters::WhereInput;
 use super::ninja_currency::{Currency, CurrencyOrderby, CurrencyRaw, CurrencyWhere};
 use super::orderby::OrderbyInput;
 
-pub async fn fetch_currencies(
+async fn fetch_currencies(
     _where: Option<CurrencyWhere>,
     _orderby: Vec<CurrencyOrderby>,
+    league: &str,
 ) -> Vec<Currency> {
-    let league = "Ancestor";
     let endpoint = "Currency";
     let url = format!(
         "https://poe.ninja/api/data/currencyoverview?league={}&type={}",
@@ -70,4 +71,17 @@ pub async fn fetch_currencies(
     CurrencyOrderby::orderby(&mut currencies, _orderby);
 
     currencies
+}
+
+pub async fn get_currencies(
+    _where: Option<CurrencyWhere>,
+    _orderby: Vec<CurrencyOrderby>,
+) -> Vec<Currency> {
+    let league = "Ancestor";
+
+    fetch_with_cache("currency", league, || async {
+        fetch_currencies(_where, _orderby, league).await
+    })
+    .await
+    .expect("failed to fetch currency data")
 }
