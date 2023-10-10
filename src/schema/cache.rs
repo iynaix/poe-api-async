@@ -6,6 +6,8 @@ use std::{
 
 use serde::{de::DeserializeOwned, Serialize};
 
+use super::ninja_common::League;
+
 const CACHE_THRESHOLD: u64 = 60 * 60;
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -24,7 +26,7 @@ fn timestamp() -> u64 {
 
 pub async fn fetch_with_cache<T, FetchFn, Fut>(
     fetch_type: &str,
-    league: &str,
+    league: League,
     fetch_fn: FetchFn,
 ) -> std::io::Result<T>
 where
@@ -34,7 +36,7 @@ where
 {
     let fetch_time = timestamp();
 
-    let fname = format!("/tmp/__poe__{}__{}.json", fetch_type, league);
+    let fname = format!("/tmp/__poe__{}__{}.json", fetch_type, league.to_string());
     let cache_path = PathBuf::from(fname);
 
     // use cache if it is available
@@ -52,7 +54,7 @@ where
     // cache not available or outdated, fetch data
     let cache = Cache {
         fetch_time: fetch_time as i64,
-        data: data.clone(),
+        data: &data,
     };
     let cache = serde_json::to_string(&cache)?;
     std::fs::write(&cache_path, cache)?;

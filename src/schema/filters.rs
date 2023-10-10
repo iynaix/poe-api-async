@@ -178,47 +178,24 @@ impl FilterInput for ModifierFilter {
     type Item = Modifier;
 
     fn filter_fn(&self, s: Self::Item) -> bool {
-        let s = s.text;
-        let sl = s.to_lowercase();
+        let string_fitler = StringFilter {
+            _eq: self._eq.clone(),
+            _ieq: self._ieq.clone(),
+            _ne: self._ne.clone(),
+            _ine: self._ine.clone(),
+            _contains: self._contains.clone(),
+            _icontains: self._icontains.clone(),
+            _startswith: self._startswith.clone(),
+            _istartswith: self._istartswith.clone(),
+            _endswith: self._endswith.clone(),
+            _iendswith: self._iendswith.clone(),
+            _regex: self._regex.clone(),
+            _iregex: self._iregex.clone(),
+            _in: self._in.clone(),
+            _nin: self._nin.clone(),
+        };
 
-        // note if statements are for the failure case
-        match self {
-            Self { _eq: Some(v), .. } if &s != v => false,
-            Self { _ieq: Some(v), .. } if sl != v.to_lowercase() => false,
-            Self { _ne: Some(v), .. } if &s == v => false,
-            Self { _ine: Some(v), .. } if sl == v.to_lowercase() => false,
-            Self {
-                _contains: Some(v), ..
-            } if !s.contains(v) => false,
-            Self {
-                _icontains: Some(v),
-                ..
-            } if !sl.contains(&v.to_lowercase()) => false,
-            Self {
-                _startswith: Some(v),
-                ..
-            } if !s.starts_with(v) => false,
-            Self {
-                _istartswith: Some(v),
-                ..
-            } if !sl.starts_with(&v.to_lowercase()) => false,
-            Self {
-                _endswith: Some(v), ..
-            } if !s.ends_with(v) => false,
-            Self {
-                _iendswith: Some(v),
-                ..
-            } if !sl.ends_with(v) => false,
-            Self {
-                _regex: Some(v), ..
-            } if !Regex::new(v).unwrap().is_match(&s) => false,
-            Self {
-                _iregex: Some(v), ..
-            } if !Regex::new(&format!("(?i){}", v)).unwrap().is_match(&s) => false,
-            Self { _in: Some(v), .. } if !v.contains(&s) => false,
-            Self { _nin: Some(v), .. } if v.contains(&s) => false,
-            _ => true,
-        }
+        string_fitler.filter_fn(s.text)
     }
 }
 

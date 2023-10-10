@@ -1,14 +1,16 @@
 use super::cache::fetch_with_cache;
 use super::filters::WhereInput;
+use super::ninja_common::League;
 use super::ninja_item::{Item, ItemEndpoint, ItemOrderby, ItemRaw, ItemWhere};
 use super::orderby::OrderbyInput;
 use futures::future;
 
-async fn fetch_item_endpoint(league: &str, endpoint: &ItemEndpoint) -> ItemRaw {
+async fn fetch_item_endpoint(league: League, endpoint: &ItemEndpoint) -> ItemRaw {
     let endpoint_str = endpoint.to_string();
     let url = format!(
         "https://poe.ninja/api/data/itemoverview?league={}&type={}",
-        league, endpoint_str
+        league.to_string(),
+        endpoint_str
     );
     let mut items = reqwest::get(url)
         .await
@@ -24,7 +26,7 @@ async fn fetch_item_endpoint(league: &str, endpoint: &ItemEndpoint) -> ItemRaw {
     items
 }
 
-async fn fetch_items(league: &str) -> Vec<Item> {
+async fn fetch_items(league: League) -> Vec<Item> {
     // let items: ItemRaw =
     //     serde_json::from_str(include_str!("jewelry.json")).expect("failed to parse jewelry.json");
 
@@ -70,40 +72,39 @@ async fn fetch_items(league: &str) -> Vec<Item> {
     )
     .await;
 
-    let items = responses
+    let mut items = responses
         .into_iter()
         .fold(ItemRaw::default(), |mut acc, curr| {
             acc.lines.extend(curr.lines);
             acc
         });
 
-    items
-        .lines
-        .iter()
-        .map(|item| {
-            let mut name = item.name.clone();
+    items.lines.iter_mut().for_each(|item| {
+        let mut name = item.name.clone();
 
-            let is_relic = item.details_id.ends_with("-relic");
-            if is_relic {
-                name = format!("{} (Relic)", &item.name);
-            }
+        let is_relic = item.details_id.ends_with("-relic");
+        if is_relic {
+            name = format!("{} (Relic)", &item.name);
+        }
 
-            // TODO: add gem level and quality to name
-            // if (endpoint === "SkillGem") {
-            //     const corrupted = Boolean(item.corrupted) ? " (Corrupted)" : ""
-            //     name = `${item.name} (${item.gemLevel}/${item.gemQuality || 0}${corrupted})`
-            // }
+        // TODO: add gem level and quality to name
+        // if (endpoint === "SkillGem") {
+        //     const corrupted = Boolean(item.corrupted) ? " (Corrupted)" : ""
+        //     name = `${item.name} (${item.gemLevel}/${item.gemQuality || 0}${corrupted})`
+        // }
 
-            Item {
-                name,
-                ..item.clone()
-            }
-        })
-        .collect()
+        item.name = name;
+    });
+
+    items.lines
 }
 
-pub async fn get_items(_where: Option<ItemWhere>, _orderby: Vec<ItemOrderby>) -> Vec<Item> {
-    let league = "Ancestor";
+pub async fn get_items(
+    _where: Option<ItemWhere>,
+    _orderby: Vec<ItemOrderby>,
+    league: Option<League>,
+) -> Vec<Item> {
+    let league = league.unwrap_or(League::TmpStandard);
 
     let items = fetch_with_cache("item", league, || async { fetch_items(league).await })
         .await

@@ -3,16 +3,18 @@ use std::collections::HashMap;
 
 use super::cache::fetch_with_cache;
 use super::filters::WhereInput;
+use super::ninja_common::League;
 use super::ninja_currency::{
     Currency, CurrencyEndpoint, CurrencyOrderby, CurrencyRaw, CurrencyWhere,
 };
 use super::orderby::OrderbyInput;
 
-async fn fetch_currency_endpoint(league: &str, endpoint: &CurrencyEndpoint) -> CurrencyRaw {
+async fn fetch_currency_endpoint(league: League, endpoint: &CurrencyEndpoint) -> CurrencyRaw {
     let endpoint_str = endpoint.to_string();
     let url = format!(
         "https://poe.ninja/api/data/currencyoverview?league={}&type={}",
-        league, endpoint_str
+        league.to_string(),
+        endpoint_str
     );
     let mut currencies = reqwest::get(url)
         .await
@@ -38,7 +40,7 @@ async fn fetch_currency_endpoint(league: &str, endpoint: &CurrencyEndpoint) -> C
     currencies
 }
 
-async fn fetch_currencies(league: &str) -> Vec<Currency> {
+async fn fetch_currencies(league: League) -> Vec<Currency> {
     // let currencies: CurrencyRaw = serde_json::from_str(include_str!("currencies.json"))
     //     .expect("failed to parse currencies.json");
 
@@ -101,8 +103,9 @@ async fn fetch_currencies(league: &str) -> Vec<Currency> {
 pub async fn get_currencies(
     _where: Option<CurrencyWhere>,
     _orderby: Vec<CurrencyOrderby>,
+    league: Option<League>,
 ) -> Vec<Currency> {
-    let league = "Ancestor";
+    let league = league.unwrap_or(League::TmpStandard);
 
     let currencies = fetch_with_cache("currency", league, || async {
         fetch_currencies(league).await
