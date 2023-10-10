@@ -1,8 +1,7 @@
-use async_graphql::SimpleObject;
+use async_graphql::{Enum, SimpleObject};
 use poe_api_derive::GQLModel;
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
-// use serde_json::Value;
 
 use super::{filters::FilterInput, ninja_common::Sparkline};
 
@@ -55,8 +54,8 @@ pub struct Item {
     #[gql(where)]
     pub corrupted: bool,
     #[serde(default)]
-    #[gql(where)]
-    pub endpoint: String,
+    // TODO: #[gql(where)]
+    pub endpoint: ItemEndpoint,
 }
 
 // needed to dedupe items for recursive filters
@@ -79,4 +78,85 @@ impl Eq for Item {}
 pub struct Modifier {
     pub text: String,
     pub optional: bool,
+}
+
+#[derive(Default, Debug, Enum, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+pub enum ItemEndpoint {
+    // General
+    Tattoo,
+    Omen,
+    DivinationCard,
+    Artifact,
+    Oil,
+    Incubator,
+    // Equipment & Gems
+    UniqueWeapon,
+    UniqueArmour,
+    #[default]
+    UniqueAccessory,
+    UniqueFlask,
+    UniqueJewel,
+    UniqueRelic,
+    SkillGem,
+    ClusterJewel,
+    // Atlas
+    Map,
+    BlightedMap,
+    BlightRavagedMap,
+    ScourgedMap,
+    UniqueMap,
+    DeliriumOrb,
+    Invitation,
+    Scarab,
+    Memory,
+    // Crafting
+    BaseType,
+    Fossil,
+    Resonator,
+    HelmetEnchant,
+    Beast,
+    Essence,
+    Vial,
+}
+
+impl ToString for ItemEndpoint {
+    fn to_string(&self) -> String {
+        match self {
+            // General
+            ItemEndpoint::Tattoo => "Tattoo",
+            ItemEndpoint::Omen => "Omen",
+            ItemEndpoint::DivinationCard => "DivinationCard",
+            ItemEndpoint::Artifact => "Artifact",
+            ItemEndpoint::Oil => "Oil",
+            ItemEndpoint::Incubator => "Incubator",
+            // Equipment & Gems
+            ItemEndpoint::UniqueWeapon => "UniqueWeapon",
+            ItemEndpoint::UniqueArmour => "UniqueArmour",
+            ItemEndpoint::UniqueAccessory => "UniqueAccessory",
+            ItemEndpoint::UniqueFlask => "UniqueFlask",
+            ItemEndpoint::UniqueJewel => "UniqueJewel",
+            ItemEndpoint::UniqueRelic => "UniqueRelic",
+            ItemEndpoint::SkillGem => "SkillGem",
+            ItemEndpoint::ClusterJewel => "ClusterJewel",
+            // Atlas
+            ItemEndpoint::Map => "Map",
+            ItemEndpoint::BlightedMap => "BlightedMap",
+            ItemEndpoint::BlightRavagedMap => "BlightRavagedMap",
+            ItemEndpoint::ScourgedMap => "ScourgedMap",
+            ItemEndpoint::UniqueMap => "UniqueMap",
+            ItemEndpoint::DeliriumOrb => "DeliriumOrb",
+            ItemEndpoint::Invitation => "Invitation",
+            ItemEndpoint::Scarab => "Scarab",
+            ItemEndpoint::Memory => "Memory",
+            // Crafting
+            ItemEndpoint::BaseType => "BaseType",
+            ItemEndpoint::Fossil => "Fossil",
+            ItemEndpoint::Resonator => "Resonator",
+            ItemEndpoint::HelmetEnchant => "HelmetEnchant",
+            ItemEndpoint::Beast => "Beast",
+            ItemEndpoint::Essence => "Essence",
+            ItemEndpoint::Vial => "Vial",
+        }
+        .to_string()
+    }
 }

@@ -3,20 +3,39 @@ use std::collections::HashMap;
 
 use super::cache::fetch_with_cache;
 use super::filters::WhereInput;
-use super::ninja_currency::{Currency, CurrencyOrderby, CurrencyRaw, CurrencyWhere};
+use super::ninja_currency::{
+    Currency, CurrencyEndpoint, CurrencyOrderby, CurrencyRaw, CurrencyWhere,
+};
 use super::orderby::OrderbyInput;
 
-async fn fetch_currency_endpoint(league: &str, endpoint: &str) -> CurrencyRaw {
+async fn fetch_currency_endpoint(league: &str, endpoint: &CurrencyEndpoint) -> CurrencyRaw {
+    let endpoint_str = endpoint.to_string();
     let url = format!(
         "https://poe.ninja/api/data/currencyoverview?league={}&type={}",
-        league, endpoint
+        league, endpoint_str
     );
-    reqwest::get(url)
+    let mut currencies = reqwest::get(url)
         .await
-        .unwrap_or_else(|_| panic!("could not fetch currency data from endpoint: {}", endpoint))
+        .unwrap_or_else(|_| {
+            panic!(
+                "could not fetch currency data from endpoint: {}",
+                endpoint_str
+            )
+        })
         .json::<CurrencyRaw>()
         .await
-        .unwrap_or_else(|_| panic!("could not parse currency data from endpoint: {}", endpoint))
+        .unwrap_or_else(|_| {
+            panic!(
+                "could not parse currency data from endpoint: {}",
+                endpoint_str
+            )
+        });
+
+    // add endpoint information
+    currencies.lines.iter_mut().for_each(|line| {
+        line.endpoint = *endpoint;
+    });
+    currencies
 }
 
 async fn fetch_currencies(league: &str) -> Vec<Currency> {
@@ -26,12 +45,10 @@ async fn fetch_currencies(league: &str) -> Vec<Currency> {
     // fetch multiple requests and join them
     // https://stackoverflow.com/a/75590180
 
-    let endpoints = ["Currency", "Fragment"];
-
     let responses = future::join_all(
-        endpoints
+        [CurrencyEndpoint::Currency, CurrencyEndpoint::Fragment]
             .iter()
-            .map(|&endpoint| async move { fetch_currency_endpoint(league, endpoint).await }),
+            .map(|endpoint| async move { fetch_currency_endpoint(league, endpoint).await }),
     )
     .await;
 
@@ -91,7 +108,7 @@ pub async fn get_currencies(
         fetch_currencies(league).await
     })
     .await
-    // error will be bubbled up from
+    // error will be bubbled up
     .unwrap();
 
     let mut currencies = if let Some(_where) = _where {

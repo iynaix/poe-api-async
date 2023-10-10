@@ -1,4 +1,4 @@
-use async_graphql::SimpleObject;
+use async_graphql::{Enum, SimpleObject};
 use poe_api_derive::GQLModel;
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
@@ -44,8 +44,8 @@ pub struct Currency {
     #[gql(where, orderby)]
     pub divine_value: f64,
     #[serde(default)]
-    #[gql(where)]
-    pub endpoint: String,
+    // TODO: #[gql(where)]
+    pub endpoint: CurrencyEndpoint,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize, SimpleObject)]
@@ -127,3 +127,20 @@ impl PartialEq for Currency {
 }
 
 impl Eq for Currency {}
+
+#[derive(Default, Debug, Enum, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+pub enum CurrencyEndpoint {
+    #[default]
+    Currency,
+    Fragment,
+}
+
+impl ToString for CurrencyEndpoint {
+    fn to_string(&self) -> String {
+        match self {
+            CurrencyEndpoint::Currency => "Currency",
+            CurrencyEndpoint::Fragment => "Fragment",
+        }
+        .to_string()
+    }
+}
