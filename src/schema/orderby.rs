@@ -1,4 +1,4 @@
-use async_graphql::Enum;
+use async_graphql::{Enum, InputType, Value};
 
 #[derive(Enum, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Orderby {
@@ -11,54 +11,34 @@ pub type OrderbyPair = (String, Orderby);
 
 pub trait OrderbyInput
 where
-    Self: Sized,
+    Self: Sized + InputType,
 {
     type Output: Clone;
 
-    // TODO: implement for async_graphql
+    // TODO: fix for ordered fields?
     fn to_orderby_vec(&self) -> Vec<Self> {
-        // if let Some(order) = &self {
-        //     if let Value::Object(value) = order.to_value() {
-        //         value.iter().for_each(|(k, v)| {
-        //             println!("{}: {:?}", k, v);
-        //         });
-        //     }
-        // };
-
-        Vec::new()
-    }
-
-    /*
-    fn from_executor<__S: ScalarValue>(executor: &Executor<(), __S>) -> Vec<Self> {
-        let look_ahead = executor.look_ahead();
-
-        if let Some(orderby_arg) = look_ahead.argument("orderby") {
-            if let LookAheadValue::Object(orderby_arg) = orderby_arg.value() {
-                let orderby_pairs: Vec<_> = orderby_arg
-                    .iter()
-                    .filter_map(|(orderby_name, orderby_value)| {
-                        if let LookAheadValue::Enum(orderby_value) = orderby_value {
-                            Some((
-                                orderby_name.to_string(),
-                                match *orderby_value {
-                                    "DESC" => Orderby::Desc,
-                                    _ => Orderby::Asc,
-                                },
-                            ))
-                        } else {
-                            None
-                        }
-                    })
-                    .collect();
-                return Self::from_orderbypairs(orderby_pairs);
-            } else {
-                return Vec::new();
-            }
+        if let Value::Object(value) = self.to_value() {
+            let orderby_pairs: Vec<OrderbyPair> = value
+                .iter()
+                .filter_map(|(orderby_name, orderby_value)| {
+                    if let Value::Enum(v) = orderby_value {
+                        Some((
+                            orderby_name.to_string(),
+                            match v.as_str() {
+                                "DESC" => Orderby::Desc,
+                                _ => Orderby::Asc,
+                            },
+                        ))
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            Self::from_orderbypairs(orderby_pairs);
         }
 
         Vec::new()
     }
-    */
 
     fn from_orderbypairs(orderby_vec: Vec<OrderbyPair>) -> Vec<Self>;
 

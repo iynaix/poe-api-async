@@ -164,7 +164,7 @@ impl FieldInfo {
 
         let name = format_ident!("{}", &self.name);
         Some(quote! {
-            "#name" => Some(Self {
+            #name => Some(Self {
                 #name: Some(orderby_value),
                 ..Self::default()
             }),
