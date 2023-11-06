@@ -14,7 +14,7 @@ use item::get_items;
 use ninja_common::League;
 use ninja_currency::{Currency, CurrencyOrderby, CurrencyWhere};
 use ninja_item::{Item, ItemOrderby, ItemWhere};
-use orderby::{Orderby, OrderbyInput};
+use orderby::Orderby;
 
 pub struct QueryRoot;
 
@@ -27,17 +27,10 @@ impl QueryRoot {
         &self,
         _ctx: &Context<'a>,
         _where: Option<CurrencyWhere>,
-        _orderby: Option<CurrencyOrderby>,
+        _orderby: Option<Vec<CurrencyOrderby>>,
         league: Option<League>,
     ) -> Vec<Currency> {
-        let orderby_arr: Vec<CurrencyOrderby> = match _orderby {
-            // default Value
-            None => vec![CurrencyOrderby {
-                name: Some(Orderby::Asc),
-                ..Default::default()
-            }],
-            Some(_orderby) => OrderbyInput::to_orderby_vec(&_orderby),
-        };
+        let orderby_arr = _orderby.unwrap_or(vec![CurrencyOrderby::name(Orderby::Asc)]);
 
         get_currencies(_where, orderby_arr, league).await
     }
@@ -46,17 +39,10 @@ impl QueryRoot {
         &self,
         _ctx: &Context<'a>,
         _where: Option<ItemWhere>,
-        _orderby: Option<ItemOrderby>,
+        _orderby: Option<Vec<ItemOrderby>>,
         league: Option<League>,
     ) -> Vec<Item> {
-        let orderby_arr: Vec<ItemOrderby> = match _orderby {
-            // default Value
-            None => vec![ItemOrderby {
-                name: Some(Orderby::Asc),
-                ..Default::default()
-            }],
-            Some(_orderby) => OrderbyInput::to_orderby_vec(&_orderby),
-        };
+        let orderby_arr = _orderby.unwrap_or(vec![ItemOrderby::name(Orderby::Asc)]);
 
         get_items(_where, orderby_arr, league).await
     }

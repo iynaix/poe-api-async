@@ -148,27 +148,13 @@ impl FieldInfo {
         Some(ret)
     }
 
-    fn orderby_struct_field(&self) -> Option<TokenStream> {
+    fn orderby_enum_field(&self) -> Option<TokenStream> {
         if !self.attrs.orderby {
             return None;
         }
 
         let name = format_ident!("{}", &self.name);
-        Some(quote! { pub #name: Option<crate::schema::Orderby>, })
-    }
-
-    fn orderbyinput_from_orderpairs_match(&self) -> Option<TokenStream> {
-        if !self.attrs.orderby {
-            return None;
-        }
-
-        let name = format_ident!("{}", &self.name);
-        Some(quote! {
-            #name => Some(Self {
-                #name: Some(orderby_value),
-                ..Self::default()
-            }),
-        })
+        Some(quote! { #name(crate::schema::Orderby), })
     }
 
     fn orderbyinput_cmp_orderby_match(&self) -> Option<TokenStream> {
@@ -179,10 +165,7 @@ impl FieldInfo {
         let name = format_ident!("{}", &self.name);
 
         Some(quote! {
-            Self {
-                #name: Some(v),
-                ..
-            } => match v {
+            Self::#name(v)=> match v {
                 crate::schema::Orderby::Asc => a.#name.partial_cmp(&b.#name).unwrap(),
                 crate::schema::Orderby::Desc => a.#name.partial_cmp(&b.#name).unwrap().reverse(),
             },
@@ -251,21 +234,21 @@ fn impl_whereinput(fields: &[FieldInfo], model_ident: &Ident) -> TokenStream {
     }
 }
 
-fn orderby_struct(fields: &[FieldInfo], model_ident: &Ident) -> TokenStream {
+fn orderby_enum(fields: &[FieldInfo], model_ident: &Ident) -> TokenStream {
     if fields.is_empty() {
         return quote! {};
     }
 
     let orderby_ident = format_ident!("{}Orderby", model_ident);
-    let struct_fields = fields
+    let enum_fields = fields
         .iter()
-        .filter_map(|info| info.orderby_struct_field())
+        .filter_map(|info| info.orderby_enum_field())
         .collect::<Vec<_>>();
 
     quote! {
-        #[derive(Debug, Default, async_graphql::InputObject)]
-        pub struct #orderby_ident {
-            #(#struct_fields)*
+        #[derive(Debug, async_graphql::OneofObject)]
+        pub enum #orderby_ident {
+            #(#enum_fields)*
         }
     }
 }
@@ -276,11 +259,6 @@ fn impl_orderbyinput(fields: &[FieldInfo], model_ident: &Ident) -> TokenStream {
     }
 
     let orderby_ident = format_ident!("{}Orderby", model_ident);
-    let from_orderpairs_match = fields
-        .iter()
-        .filter_map(|info| info.orderbyinput_from_orderpairs_match())
-        .collect::<Vec<_>>();
-
     let cmp_orderby_match = fields
         .iter()
         .filter_map(|info| info.orderbyinput_cmp_orderby_match())
@@ -289,22 +267,6 @@ fn impl_orderbyinput(fields: &[FieldInfo], model_ident: &Ident) -> TokenStream {
     quote! {
         impl crate::schema::orderby::OrderbyInput for #orderby_ident {
             type Output = #model_ident;
-
-            fn from_orderbypairs(orderby_vec: Vec<crate::schema::orderby::OrderbyPair>) -> Vec<Self>
-            where
-                Self: Sized,
-            {
-                orderby_vec
-                    .into_iter()
-                    .filter_map(
-                        |(orderby_name, orderby_value)| match orderby_name.as_str() {
-                            // generate match statements for each field
-                            #(#from_orderpairs_match)*
-                            _ => None,
-                        },
-                    )
-                    .collect()
-            }
 
             fn cmp_orderby(&self, a: &Self::Output, b: &Self::Output) -> std::cmp::Ordering {
                 match self {
@@ -325,7 +287,7 @@ pub fn gqlmodel_core(item: TokenStream) -> deluxe::Result<TokenStream> {
 
     let where_struct = where_struct(&fields_info, &model_ident);
     let impl_whereinput = impl_whereinput(&fields_info, &model_ident);
-    let orderby_struct = orderby_struct(&fields_info, &model_ident);
+    let orderby_enum = orderby_enum(&fields_info, &model_ident);
     let impl_orderbyinput = impl_orderbyinput(&fields_info, &model_ident);
 
     Ok(quote! {
@@ -333,7 +295,7 @@ pub fn gqlmodel_core(item: TokenStream) -> deluxe::Result<TokenStream> {
 
         #impl_whereinput
 
-        #orderby_struct
+        #orderby_enum
 
         #impl_orderbyinput
     })
