@@ -10,4 +10,4 @@ proc-macro = true
 
 [dependencies]
 poe-api-core = { path = "../poe-api-core" }
-proc-macro2 = "1.0.67"
+proc-macro2 = "1.0.86"
